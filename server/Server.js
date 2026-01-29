@@ -28,10 +28,10 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
-app.use("/admin", adminAuthRoutes);
-app.use("/admin", productRoutes);
-app.use("/admin", categoryRoutes);
-app.use("/admin", analyticsRoutes);
+app.use("/api/admin", adminAuthRoutes);
+app.use("/api/admin", productRoutes);
+app.use("/api/admin", categoryRoutes);
+app.use("/api/admin", analyticsRoutes);
 
 app.use("/api", productRoutes);
 app.use("/api", categoryRoutes);

@@ -28,29 +28,14 @@ import {
   Inventory2,
   WarningAmber
 } from "@mui/icons-material";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { fetchOrders } from "../Store/OrderSlice";
 import { fetchProducts } from "../Store/ProductSlice";
+import { fetchAnalyticsData } from "../Store/AnalyticsSlice";
 
-const salesData = [
-  { name: "Mon", value: 400 },
-  { name: "Tue", value: 300 },
-  { name: "Wed", value: 500 },
-  { name: "Thu", value: 450 },
-  { name: "Fri", value: 600 },
-  { name: "Sat", value: 700 },
-  { name: "Sun", value: 650 }
-];
-
-const categoryData = [
-  { name: "Vegetables", value: 40 },
-  { name: "Fruits", value: 30 },
-  { name: "Dairy", value: 20 },
-  { name: "Snacks", value: 10 }
-];
-
-const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#a855f7"];
+const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#a855f7", "#ef4444", "#8b5cf6"];
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -69,12 +54,15 @@ const getStatusColor = (status) => {
 
 export default function Dashboard() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { orders } = useSelector((state) => state.orders);
   const { products } = useSelector((state) => state.products);
+  const { dailySales, categoryPerformance } = useSelector((state) => state.analytics);
 
   useEffect(() => {
     dispatch(fetchOrders());
     dispatch(fetchProducts());
+    dispatch(fetchAnalyticsData());
   }, [dispatch]);
 
 
@@ -88,10 +76,25 @@ export default function Dashboard() {
     return acc + lowStockVariants;
   }, 0);
 
-  const activeProducts = products.filter(p => p.isActive !== false).length; // Assuming isActive field exists or default true
-
+  const activeProducts = products.filter(p => p.isActive !== false).length;
 
   const recentOrders = orders.slice(0, 5);
+
+  const salesData = useMemo(() => {
+    if (!dailySales || dailySales.length === 0) return [];
+    return dailySales.map(item => ({
+      name: new Date(item._id).toLocaleDateString('en-US', { weekday: 'short' }),
+      value: item.totalRevenue
+    }));
+  }, [dailySales]);
+
+  const categoryData = useMemo(() => {
+    if (!categoryPerformance || categoryPerformance.length === 0) return [];
+    return categoryPerformance.map(item => ({
+      name: item._id,
+      value: item.totalSales // or item.itemCount depending on what we want to show
+    }));
+  }, [categoryPerformance]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -240,7 +243,11 @@ export default function Dashboard() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Button size="small" sx={{ color: "#16a34a" }}>
+                    <Button 
+                      size="small" 
+                      sx={{ color: "#16a34a" }}
+                      onClick={() => navigate('/orders')}
+                    >
                       View
                     </Button>
                   </TableCell>
@@ -307,33 +314,3 @@ const cardHeader = {
   alignItems: "center",
   mb: 3
 };
-
-const orders = [
-  {
-    id: "#SGM2024001",
-    customer: "Rajesh Kumar",
-    date: "Today, 10:30 AM",
-    amount: "₹340",
-    status: "Delivered",
-    bg: "#dcfce7",
-    color: "#16a34a"
-  },
-  {
-    id: "#SGM2024002",
-    customer: "Priya Sharma",
-    date: "Today, 11:15 AM",
-    amount: "₹520",
-    status: "Processing",
-    bg: "#dbeafe",
-    color: "#2563eb"
-  },
-  {
-    id: "#SGM2024003",
-    customer: "Amit Patel",
-    date: "Today, 12:00 PM",
-    amount: "₹285",
-    status: "Pending",
-    bg: "#fef9c3",
-    color: "#ca8a04"
-  }
-];

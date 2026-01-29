@@ -48,12 +48,19 @@ export default function InventoryManagement() {
     dispatch(fetchProducts());
   }, [dispatch]);
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/40";
+    if (imagePath.startsWith("http")) return imagePath;
+    const normalizedPath = imagePath.replace(/\\/g, "/");
+    return `http://localhost:5000/${normalizedPath}`;
+  };
+
   const inventoryItems = products.flatMap(product => 
     product.variants.map(variant => ({
       productId: product._id,
       name: product.name,
       sku: product.sku,
-      img: product.images?.[0] || "",
+      img: getImageUrl(product.images?.[0]),
       category: product.categoryId?.name || "Uncategorized",
       variant: variant.unit,
       stock: variant.stock,
@@ -245,7 +252,7 @@ export default function InventoryManagement() {
                   <Box display="flex" alignItems="center" gap={2}>
                     <Box
                       component="img"
-                      src={item.img || "https://via.placeholder.com/40"}
+                      src={item.img}
                       sx={{ width: 40, height: 40, borderRadius: 2 }}
                     />
                     <Box>

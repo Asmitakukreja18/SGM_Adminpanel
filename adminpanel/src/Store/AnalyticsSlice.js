@@ -1,41 +1,29 @@
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../Api/axios";
 
-export const fetchTopSelling = createAsyncThunk("analytics/fetchTopSelling", async (_, thunkAPI) => {
-  try {
-    const res = await api.get("/admin/analytics/top-selling");
-    return res.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message);
-  }
-});
+export const fetchAnalyticsData = createAsyncThunk(
+  "analytics/fetchAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      const [topSelling, categoryPerformance, dailySales, stockReport] = await Promise.all([
+        api.get("/admin/analytics/top-selling"),
+        api.get("/admin/analytics/categories"),
+        api.get("/admin/analytics/daily-sales"),
+        api.get("/admin/analytics/stock")
+      ]);
 
-export const fetchCategoryPerformance = createAsyncThunk("analytics/fetchCategoryPerformance", async (_, thunkAPI) => {
-  try {
-    const res = await api.get("/admin/analytics/categories");
-    return res.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message);
+      return {
+        topSelling: topSelling.data,
+        categoryPerformance: categoryPerformance.data,
+        dailySales: dailySales.data,
+        stockReport: stockReport.data
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch analytics data");
+    }
   }
-});
-
-export const fetchDailySales = createAsyncThunk("analytics/fetchDailySales", async (_, thunkAPI) => {
-  try {
-    const res = await api.get("/admin/analytics/daily-sales");
-    return res.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message);
-  }
-});
-
-export const fetchStockReport = createAsyncThunk("analytics/fetchStockReport", async (_, thunkAPI) => {
-  try {
-    const res = await api.get("/admin/analytics/stock");
-    return res.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message);
-  }
-});
+);
 
 const analyticsSlice = createSlice({
   name: "analytics",
@@ -45,34 +33,27 @@ const analyticsSlice = createSlice({
     dailySales: [],
     stockReport: { lowStock: [], outOfStock: [] },
     loading: false,
-    error: null
+    error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-    
-      .addCase(fetchTopSelling.pending, (state) => { state.loading = true; })
-      .addCase(fetchTopSelling.fulfilled, (state, action) => {
+      .addCase(fetchAnalyticsData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAnalyticsData.fulfilled, (state, action) => {
         state.loading = false;
-        state.topSelling = action.payload;
+        state.topSelling = action.payload.topSelling;
+        state.categoryPerformance = action.payload.categoryPerformance;
+        state.dailySales = action.payload.dailySales;
+        state.stockReport = action.payload.stockReport;
       })
-      
-  
-      .addCase(fetchCategoryPerformance.fulfilled, (state, action) => {
-        state.categoryPerformance = action.payload;
-      })
-
-   
-      .addCase(fetchDailySales.fulfilled, (state, action) => {
-        state.dailySales = action.payload;
-      })
-
-    
-      .addCase(fetchStockReport.fulfilled, (state, action) => {
-        state.stockReport = action.payload;
+      .addCase(fetchAnalyticsData.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
       });
-  }
+  },
 });
 
 export default analyticsSlice.reducer;

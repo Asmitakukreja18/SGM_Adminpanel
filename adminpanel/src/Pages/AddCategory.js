@@ -95,13 +95,14 @@ export default function CategoryForm() {
           onChange={(e) => setName(e.target.value)}
           sx={{ mb: 3 }}
         />
-<TextField
-  fullWidth
-  label="Icon (Emoji or text)"
-  value={icon}
-  onChange={(e) => setIcon(e.target.value)}
-  sx={{ mb: 2 }}
-/>
+        <TextField
+          fullWidth
+          label="Icon Family Name"
+          value={icon}
+          onChange={(e) => setIcon(e.target.value)}
+          sx={{ mb: 2 }}
+          helperText="e.g. MaterialIcons, Ionicons, etc."
+        />
 
 <Box display="flex" gap={2} mb={3}>
   <TextField

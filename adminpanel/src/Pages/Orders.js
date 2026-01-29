@@ -10,9 +10,15 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Button
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Divider
 } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrders, updateOrderStatus } from "../Store/OrderSlice";
 
@@ -34,6 +40,8 @@ const getStatusColor = (status) => {
 export default function OrdersManagement() {
   const dispatch = useDispatch();
   const { orders, loading } = useSelector((state) => state.orders);
+  const [open, setOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     dispatch(fetchOrders());
@@ -41,6 +49,23 @@ export default function OrdersManagement() {
 
   const handleStatusChange = (id, newStatus) => {
     dispatch(updateOrderStatus({ id, status: newStatus }));
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/40";
+    if (imagePath.startsWith("http")) return imagePath;
+    const normalizedPath = imagePath.replace(/\\/g, "/");
+    return `http://localhost:5000/${normalizedPath}`;
+  };
+
+  const handleViewDetails = (order) => {
+    setSelectedOrder(order);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedOrder(null);
   };
 
   return (
@@ -150,6 +175,7 @@ export default function OrdersManagement() {
                         fontWeight: 600,
                         textTransform: "none"
                       }}
+                      onClick={() => handleViewDetails(o)}
                     >
                       View Details
                     </Button>
@@ -171,6 +197,71 @@ export default function OrdersManagement() {
           </Typography>
         </Box>
       </Paper>
+
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Order Details #{selectedOrder?._id.slice(-6).toUpperCase()}</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedOrder && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>Customer Information</Typography>
+                <Typography variant="body2"><strong>Name:</strong> {selectedOrder.user?.name || selectedOrder.customer?.name}</Typography>
+                <Typography variant="body2"><strong>Phone:</strong> {selectedOrder.user?.phone || selectedOrder.customer?.phone}</Typography>
+                <Typography variant="body2"><strong>Address:</strong> {selectedOrder.user?.address || selectedOrder.customer?.address}</Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>Order Information</Typography>
+                <Typography variant="body2"><strong>Date:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</Typography>
+                <Typography variant="body2"><strong>Status:</strong> {selectedOrder.status}</Typography>
+                <Typography variant="body2"><strong>Total Amount:</strong> ₹{selectedOrder.totalAmount}</Typography>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="subtitle2" gutterBottom>Order Items</Typography>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Product</TableCell>
+                      <TableCell>Variant</TableCell>
+                      <TableCell>Quantity</TableCell>
+                      <TableCell>Price</TableCell>
+                      <TableCell>Total</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {selectedOrder.items.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Box display="flex" alignItems="center" gap={2}>
+                            <Box
+                              component="img"
+                              src={getImageUrl(item.productId?.images?.[0])}
+                              sx={{ width: 40, height: 40, borderRadius: 1, objectFit: "cover" }}
+                            />
+                            <Typography variant="body2">{item.name}</Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>{item.variant}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₹{item.price}</TableCell>
+                        <TableCell>₹{item.quantity * item.price}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

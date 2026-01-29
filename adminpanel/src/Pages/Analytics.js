@@ -28,10 +28,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  fetchTopSelling,
-  fetchCategoryPerformance,
-  fetchDailySales,
-  fetchStockReport
+  fetchAnalyticsData
 } from "../Store/AnalyticsSlice";
 
 ChartJS.register(
@@ -54,10 +51,7 @@ export default function ReportsAnalytics() {
   const [timeRange, setTimeRange] = useState("7");
 
   useEffect(() => {
-    dispatch(fetchTopSelling());
-    dispatch(fetchCategoryPerformance());
-    dispatch(fetchDailySales());
-    dispatch(fetchStockReport());
+    dispatch(fetchAnalyticsData());
   }, [dispatch]);
 
   
@@ -105,8 +99,9 @@ export default function ReportsAnalytics() {
   }, [dailySales]);
 
   const summaryStats = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    // Use local time for date matching since backend now aggregates by IST (+05:30)
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
 
     const todayData = dailySales.find((d) => d._id === today) || { totalRevenue: 0, orderCount: 0 };
     const yesterdayData = dailySales.find((d) => d._id === yesterday) || { totalRevenue: 0, orderCount: 0 };

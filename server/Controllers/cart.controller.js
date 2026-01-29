@@ -1,4 +1,5 @@
 import Cart from "../Models/Cart.js";
+import Product from "../Models/Product.js";
 
 
 export const addToCart = async (req, res) => {
@@ -9,7 +10,34 @@ export const addToCart = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+   
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const variantData = product.variants.find(v => v.unit === variant);
+    if (!variantData) {
+      return res.status(400).json({ message: "Variant not found" });
+    }
+
     let cart = await Cart.findOne({ cartId });
+    let newQuantity = quantity;
+
+    if (cart) {
+      const existingItem = cart.items.find(
+        (p) => p.productId.toString() === productId && p.variant === variant
+      );
+      if (existingItem) {
+        newQuantity += existingItem.quantity;
+      }
+    }
+
+    if (variantData.stock < newQuantity) {
+      return res.status(400).json({ 
+        message: `Insufficient stock. Only ${variantData.stock} available.` 
+      });
+    }
 
     if (!cart) {
      
@@ -57,6 +85,21 @@ export const updateCartItem = async (req, res) => {
 
     const cart = await Cart.findOne({ cartId });
     if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+   
+    if (quantity > 0) {
+      const product = await Product.findById(productId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      
+      const variantData = product.variants.find(v => v.unit === variant);
+      if (!variantData) return res.status(400).json({ message: "Variant not found" });
+
+      if (variantData.stock < quantity) {
+         return res.status(400).json({ 
+          message: `Insufficient stock. Only ${variantData.stock} available.` 
+        });
+      }
+    }
 
     const itemIndex = cart.items.findIndex(
       (p) => p.productId.toString() === productId && p.variant === variant

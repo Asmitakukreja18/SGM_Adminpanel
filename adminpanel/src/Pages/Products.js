@@ -20,7 +20,7 @@ import { Add, Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProducts, deleteProduct } from "../Store/ProductSlice";
+import { fetchProducts, deleteProduct, updateProduct } from "../Store/ProductSlice";
 
 export default function ProductManagement() {
   const navigate = useNavigate();
@@ -32,6 +32,14 @@ export default function ProductManagement() {
     dispatch(fetchProducts());
   }, [dispatch]);
 
+  // Fixed getImageUrl definition
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/40";
+    if (imagePath.startsWith("http")) return imagePath;
+    const normalizedPath = imagePath.replace(/\\/g, "/");
+    return `http://localhost:5000/${normalizedPath}`;
+  };
+
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       dispatch(deleteProduct(id));
@@ -40,6 +48,12 @@ export default function ProductManagement() {
   
   const handleEdit = (id) => {
     navigate(`/products/edit/${id}`);
+  };
+
+  const handleToggleStatus = (id, currentStatus) => {
+    const formData = new FormData();
+    formData.append("isActive", !currentStatus);
+    dispatch(updateProduct({ id, data: formData }));
   };
 
   return (
@@ -110,7 +124,7 @@ export default function ProductManagement() {
                       <Box display="flex" alignItems="center" gap={2}>
                         <Box
                           component="img"
-                          src={p.images?.[0] || "https://via.placeholder.com/40"}
+                          src={getImageUrl(p.images?.[0])}
                           sx={{ width: 40, height: 40, borderRadius: 2 }}
                         />
                         <Box>
@@ -134,7 +148,7 @@ export default function ProductManagement() {
                           totalStock > 0
                             ? `In Stock (${totalStock})`
                             : "Out of Stock"
-                        }
+                          }
                         color={totalStock > 0 ? "success" : "error"}
                         size="small"
                       />
@@ -142,7 +156,11 @@ export default function ProductManagement() {
 
                    
                     <TableCell>
-                      <Switch checked={p.isActive} color="success" />
+                      <Switch 
+                        checked={p.isActive} 
+                        color="success" 
+                        onChange={() => handleToggleStatus(p._id, p.isActive)}
+                      />
                     </TableCell>
 
                     <TableCell>

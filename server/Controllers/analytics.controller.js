@@ -72,7 +72,7 @@ export const getDailySales = async (req, res) => {
       { $match: { createdAt: { $gte: sevenDaysAgo } } },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+05:30" } },
           totalRevenue: { $sum: "$totalAmount" },
           orderCount: { $sum: 1 }
         }

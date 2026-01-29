@@ -19,7 +19,7 @@ import { Add, Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCategories, deleteCategory } from "../Store/CategorySlice";
+import { fetchCategories, deleteCategory, updateCategory } from "../Store/CategorySlice";
 
 export default function CategoryManagement() {
   const navigate = useNavigate();
@@ -30,6 +30,23 @@ export default function CategoryManagement() {
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
+
+  const handleToggleStatus = (id, currentStatus) => {
+    dispatch(updateCategory({ id, isActive: !currentStatus }));
+  };
+
+  // Fixed renderIcon definition
+  const renderIcon = (icon) => {
+    if (!icon) return "📦";
+    if (icon.length > 2) {
+      return (
+        <Typography variant="caption" sx={{ fontSize: 10, fontWeight: "bold" }}>
+          {icon.slice(0, 3).toUpperCase()}
+        </Typography>
+      );
+    }
+    return icon;
+  };
 
   return (
     <>
@@ -113,10 +130,12 @@ export default function CategoryManagement() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 18
+                      fontSize: 18,
+                      overflow: "hidden" 
                     }}
+                    title={c.icon} // Show full name on hover
                   >
-                    {c.icon || "📦"}
+                    {renderIcon(c.icon)}
                   </Box>
                 </TableCell>
 
@@ -125,7 +144,11 @@ export default function CategoryManagement() {
                 <TableCell>{c.productsCount || 0}</TableCell>
 
                 <TableCell>
-                  <Switch checked={c.isActive} color="success" />
+                  <Switch 
+                    checked={c.isActive} 
+                    color="success" 
+                    onChange={() => handleToggleStatus(c._id, c.isActive)}
+                  />
                 </TableCell>
 
                 <TableCell>

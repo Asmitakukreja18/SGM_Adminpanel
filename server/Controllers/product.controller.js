@@ -16,6 +16,8 @@ export const addProduct = async (req, res) => {
       );
     }
 
+    const totalStock = variants.reduce((acc, curr) => acc + Number(curr.stock), 0);
+
     const product = await Product.create({
       name,
       sku,
@@ -24,6 +26,7 @@ export const addProduct = async (req, res) => {
       description,
       isActive: isActive === "true" || isActive === true,
       variants,
+      stock: totalStock,
       images
     });
 
@@ -48,6 +51,10 @@ export const updateProduct = async (req, res) => {
 
     if (updateData.variants && typeof updateData.variants === "string") {
       updateData.variants = JSON.parse(updateData.variants);
+    }
+
+    if (updateData.variants) {
+      updateData.stock = updateData.variants.reduce((acc, curr) => acc + Number(curr.stock), 0);
     }
 
     if (req.files && req.files.length > 0) {

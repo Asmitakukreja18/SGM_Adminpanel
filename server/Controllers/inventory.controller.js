@@ -24,6 +24,10 @@ export const addInventoryEntry = async (req, res) => {
         } else if (type === "OUT") {
           product.variants[variantIndex].stock -= Number(quantity);
         }
+        
+       
+        product.stock = product.variants.reduce((acc, curr) => acc + Number(curr.stock), 0);
+        
         await product.save();
       }
     }
